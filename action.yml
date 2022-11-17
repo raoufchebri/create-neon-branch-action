@@ -1,0 +1,44 @@
+name: Create Neon Branch Action
+author: Raouf
+description: Creates a new Neon Postgres branch based a parent branch.
+branding:
+  icon: "box"
+  color: "green"
+
+inputs:
+  project_id:
+    required: true
+    type: string
+  parent_branch_id:
+    required: true
+    type: string
+  branch_name:
+    required: false
+    type: string
+  api_key:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Create branch
+    shell: bash
+    run: |
+      OUTPUT=`curl -X 'POST' \
+      'https://console.neon.tech/api/v2/projects/${{inputs.project_id}}/branches' \
+      -H 'accept: application/json' \
+      -H 'Authorization: Bearer ${{ inputs.api_key }}' \
+      -H 'Content-Type: application/json' \
+      -d '{
+      "branch": {
+        "parent_id": "${{inputs.parent_branch_id}}",
+        "name": "${{inputs.branch_name}}"
+      }
+      }'`
+      echo $OUTPUT > output.json
+
+    - name: Upload branch metadata file
+      uses: actions/upload-artifact@v3
+      with:
+        name: create-branch-output
+        path: output.json
